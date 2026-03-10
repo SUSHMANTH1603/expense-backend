@@ -5,6 +5,7 @@ const cors = require('cors');
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const https = require('https');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -182,3 +183,14 @@ setInterval(() => {
 app.listen(PORT, () => {
     console.log(`🚀 Expense API running on http://localhost:${PORT}`);
 });
+
+// THE SDE HEARTBEAT: Ping the server every 14 minutes to prevent Render from sleeping
+const RENDER_URL = 'https://expense-backend-6b8n.onrender.com';
+
+setInterval(() => {
+    https.get(RENDER_URL, (res) => {
+        console.log(`Heartbeat ping sent. Status: ${res.statusCode}`);
+    }).on('error', (err) => {
+        console.error('Heartbeat ping failed:', err.message);
+    });
+}, 840000); // 840,000 milliseconds = exactly 14 minutes
