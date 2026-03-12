@@ -1,0 +1,17 @@
+import mongoose, { Schema, Document } from 'mongoose';
+
+// 1. The TS Interface
+export interface IUser extends Document {
+    email: string;
+    passwordHash: string;
+}
+
+// 2. The Mongoose Schema
+const UserSchema: Schema = new Schema({
+    email: { type: String, required: true, unique: true },
+    passwordHash: { type: String, required: true }
+}, {
+    timestamps: true
+});
+
+export default mongoose.model<IUser>('User', UserSchema);

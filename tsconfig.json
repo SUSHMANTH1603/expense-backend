@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "target": "es2022", /* Use modern JavaScript features */
+    "module": "commonjs", /* Use the standard Node.js module system */
+    "rootDir": "./src", /* Where your TS files live */
+    "outDir": "./dist", /* Where the compiled JS will go later */
+    "esModuleInterop": true, /* Fixes import issues with older packages like Express */
+    "forceConsistentCasingInFileNames": true,
+    "strict": true, /* Keeps your code type-safe */
+    "skipLibCheck": true /* Skips checking the node_modules folder to save time */
+  },
+  "include": [
+    "src/**/*"
+  ] /* Only compile the src folder */
+}
