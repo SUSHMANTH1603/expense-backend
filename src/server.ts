@@ -40,3 +40,8 @@ mongoose.connect(MONGO_URI)
   .catch((error) => {
     console.error('❌ MongoDB connection error:', error);
   });
+// Error handling middleware
+app.use((err: any, req: any, res: any, next: any) => {
+  console.error('🔥 Server Crash Error:', err.stack);
+  res.status(500).send({ message: 'Something broke!', error: err.message });
+});
