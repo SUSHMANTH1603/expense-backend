@@ -10,8 +10,8 @@ import expenseRoutes from './routes/expense.routes';
 dotenv.config();
 
 const app: Application = express();
-app.use(cors());
 app.use(express.json());
+app.use(cors());
 app.use(cors({
   origin: ['http://localhost:4200', 'https://smart-expense-frontend-one.vercel.app'],
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
