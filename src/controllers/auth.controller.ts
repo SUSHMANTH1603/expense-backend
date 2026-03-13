@@ -53,6 +53,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
         // 4. Send token back to Angular
         res.status(200).json({ token, email: user.email });
     } catch (error) {
-        res.status(500).json({ error: 'Server error during login' });
+        console.error("🔥 Login Error:", error); // This will show up in your Render Logs!
+        res.status(500).json({ error: 'Server error during login', details: error });
     }
 };
