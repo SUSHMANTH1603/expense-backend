@@ -1,13 +1,15 @@
 // src/server.ts
+import dotenv from 'dotenv';
+dotenv.config();
 import express, { Application } from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
-import dotenv from 'dotenv';
+
 import authRoutes from './routes/auth.routes';
 import expenseRoutes from './routes/expense.routes';
 
 
-dotenv.config();
+
 
 const app: Application = express();
 app.use(express.json());
