@@ -1,97 +1,92 @@
 import { Response } from 'express';
+import mongoose from 'mongoose';
 import { AuthRequest } from '../middlewares/auth.middleware';
-import Expense from '../models/expense.model'; // Make sure you created this from our earlier step!
+import Expense from '../models/expense.model';
 
-// GET: Fetch only the logged-in user's expenses
+// SDE HELPER: Always converts MongoDB '_id' to Angular 'id'
+const formatExpense = (expenseDoc: any) => {
+    const obj = expenseDoc.toObject ? expenseDoc.toObject() : expenseDoc;
+    return {
+        ...obj,
+        id: obj._id.toString() // Forces it to be a clean string for Angular
+    };
+};
+
+// 1. GET ALL
 export const getExpenses = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
         const expenses = await Expense.find({ user: req.userId }).sort({ date: -1 });
-
-        // SDE TRICK: Map the MongoDB '_id' to standard 'id' for the frontend
-        const formattedExpenses = expenses.map(expense => {
-            const expObj = expense.toObject();
-            return {
-                ...expObj,
-                id: expObj._id // Angular will now be able to find the ID!
-            };
-        });
-
-        res.status(200).json(formattedExpenses);
+        const formatted = expenses.map(formatExpense);
+        res.status(200).json(formatted);
     } catch (error) {
         res.status(500).json({ error: 'Failed to fetch expenses' });
     }
 };
 
-// POST: Create a new expense
+// 2. CREATE (Fixed the glitch!)
 export const createExpense = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
         const { title, amount, category } = req.body;
-
         const newExpense = new Expense({
-            title,
-            amount,
-            category,
-            user: req.userId // We securely grab this from the middleware, NOT the frontend!
+            title, amount, category, user: req.userId
         });
-
         const savedExpense = await newExpense.save();
-        res.status(201).json(savedExpense);
+
+        // Return the formatted version so Angular gets the 'id' instantly
+        res.status(201).json(formatExpense(savedExpense));
     } catch (error) {
         res.status(500).json({ error: 'Failed to create expense' });
     }
 };
 
-// PUT: Update an existing expense (For your Edit Route!)
+// 3. UPDATE
 export const updateExpense = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
         const { id } = req.params;
-
-        // findOneAndUpdate ensures they can only edit it if they own it
         const updatedExpense = await Expense.findOneAndUpdate(
             { _id: id, user: req.userId },
             req.body,
-            { new: true } // Returns the updated document instead of the old one
+            { new: true }
         );
-
         if (!updatedExpense) {
-            res.status(404).json({ error: 'Expense not found or unauthorized' });
+            res.status(404).json({ error: 'Expense not found' });
             return;
         }
-
-        res.status(200).json(updatedExpense);
+        res.status(200).json(formatExpense(updatedExpense));
     } catch (error) {
         res.status(500).json({ error: 'Failed to update expense' });
     }
 };
 
-// DELETE: Remove an expense
+// 4. DELETE
 export const deleteExpense = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
         const { id } = req.params;
-
         const deletedExpense = await Expense.findOneAndDelete({ _id: id, user: req.userId });
-
         if (!deletedExpense) {
-            res.status(404).json({ error: 'Expense not found or unauthorized' });
+            res.status(404).json({ error: 'Expense not found' });
             return;
         }
-
-        res.status(200).json({ message: 'Expense deleted successfully' });
+        res.status(200).json({ message: 'Deleted successfully' });
     } catch (error) {
         res.status(500).json({ error: 'Failed to delete expense' });
     }
 };
 
-// GET: Fetch stats for the dashboard
+// 5. STATS (Fixed the Chart!)
 export const getExpenseStats = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
-        const expenses = await Expense.find({ user: req.userId });
+        const userObjId = new mongoose.Types.ObjectId(req.userId);
 
-        // Calculate a simple total to satisfy the frontend
-        const total = expenses.reduce((sum, item) => sum + item.amount, 0);
+        const stats = await Expense.aggregate([
+            { $match: { user: userObjId } },
+            // Matches your Angular Signal perfectly: { _id: string, totalSpent: number }
+            { $group: { _id: "$category", totalSpent: { $sum: "$amount" } } }
+        ]);
 
-        res.status(200).json({ totalExpenses: total, count: expenses.length });
+        res.status(200).json(stats);
     } catch (error) {
+        console.error("Stats Aggregation Error:", error);
         res.status(500).json({ error: 'Failed to fetch stats' });
     }
 };
